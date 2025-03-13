@@ -1,4 +1,4 @@
-package com.jagcoder.order.service;
+package com.jagcoder.order.repo;
 
 
 import com.jagcoder.order.entity.Order;

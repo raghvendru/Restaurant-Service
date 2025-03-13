@@ -25,11 +25,9 @@ public class UserService {
 
     }
 
-    public ResponseEntity<UserDTO> fetchUserDetailsById(Integer userId) {
-        Optional<User> fetchedUser =  userRepo.findById(userId);
-        if(fetchedUser.isPresent())
-            return new ResponseEntity<>(UserMapper.INSTANCE.mapUserToUserDTO(fetchedUser.get()), HttpStatus.OK);
-        return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
-
+    public UserDTO fetchUserDetailsById(Integer userId) {
+        Optional<User> fetchedUser = userRepo.findById(userId);
+        return fetchedUser.map(UserMapper.INSTANCE::mapUserToUserDTO).orElse(null);
     }
+
 }

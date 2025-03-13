@@ -27,8 +27,14 @@ public class UserController {
     @GetMapping(value = "/fetchUserById/{userId}",
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UserDTO> fetchUserDetailsById(@PathVariable Integer userId){
-        return userService.fetchUserDetailsById(userId);
+        UserDTO userDTO = userService.fetchUserDetailsById(userId);
+        if (userDTO != null) {
+            return ResponseEntity.ok(userDTO);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
     }
+
 
 
 
