@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: foodcatalogueapp
-          image: raghuuppar/foodcat-server:latest
+          image: raghuuppar/foodcat-server:0.0.2
           imagePullPolicy: Always
           ports:
             - containerPort: 9092 #
