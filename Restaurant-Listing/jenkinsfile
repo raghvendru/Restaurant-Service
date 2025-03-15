@@ -31,8 +31,10 @@ pipeline {
 
     stage('SonarQube Analysis') {
   steps {
+  dir('Restaurant-Listing') {
     sh 'mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dsonar.host.url=http://15.237.253.27:9000/ -Dsonar.login=squ_cb46075e6c73822a511d21817fbcc767ca47bf5b'
   }
+}
 }
 
 
