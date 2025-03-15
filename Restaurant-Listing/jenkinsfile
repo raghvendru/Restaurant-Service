@@ -89,17 +89,15 @@ pipeline {
 
         stage('Update Image Tag in GitOps') {
             steps {
-                checkout([$class: 'GitSCM', branches: [[name: 'refs/heads/main']], extensions: [], userRemoteConfigs: [[url: 'git@github.com:raghvendru/Restaurant-Service.git', credentialsId: 'git-ssh']]])
+                checkout([$class: 'GitSCM', branches: [[name: 'refs/heads/main']], extensions: [], userRemoteConfigs: [[url: 'git@github.com:raghvendru/Restaurant-Service.git', credentialsId: 'git-ssh']]]])
                 script {
-                    dir('Restaurant-Listing') {
-                        sh '''
-                            sed -i "s|image:.*|image: raghuuppar/restaurant-listing-server:${VERSION}|" aws/restaurant-manifest.yml
-                        '''
-                        sh 'git add .'
-                        sh 'git commit -m "Update image tag to ${VERSION}"'
-                        sshagent(['git-ssh']) {
-                            sh 'git push origin main'
-                        }
+                    sh '''
+                        sed -i "s|image:.*|image: raghuuppar/restaurant-listing-server:${VERSION}|" deployment-folder/aws/restaurant-manifest.yml
+                    '''
+                    sh 'git add deployment-folder/aws/restaurant-manifest.yml'
+                    sh 'git commit -m "Update image tag to ${VERSION}"'
+                    sshagent(['git-ssh']) {
+                        sh 'git push origin main'
                     }
                 }
             }
