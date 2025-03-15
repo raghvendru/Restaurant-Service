@@ -57,7 +57,7 @@ pipeline {
                         returnStdout: true
                     ).trim()
 
-                    def coverage = coverageValue.isNumber() ? coverageValue.toDouble() : 0.0
+                    def coverage = coverageValue.isFloat() ? coverageValue.toFloat() : 0.0
 
                     echo "Coverage: ${coverage}%"
 
@@ -92,7 +92,10 @@ pipeline {
                 checkout([$class: 'GitSCM',
                     branches: [[name: 'refs/heads/main']],
                     extensions: [],
-                    userRemoteConfigs: [[url: 'git@github.com:raghvendru/Restaurant-Service.git', credentialsId: 'git-ssh']]]
+                    userRemoteConfigs: [[
+                        url: 'git@github.com:raghvendru/Restaurant-Service.git',
+                        credentialsId: 'git-ssh'
+                    ]]
                 ])
 
                 script {
