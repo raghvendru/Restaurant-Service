@@ -87,8 +87,14 @@ pipeline {
 
     stage('Update Image Tag in GitOps') {
       steps {
-        checkout scmGit(branches: [[name: 'main']], extensions: [], userRemoteConfigs: [[credentialsId: 'git-ssh', url: 'git@github.com:raghvendru/Restaurant-Service.git']])
-        script {
+checkout scmGit(
+  branches: [[name: 'main']],
+  extensions: [],
+  userRemoteConfigs: [[
+    credentialsId: 'git-ssh', // Ensure this matches the credential ID
+    url: 'git@github.com:raghvendru/Restaurant-Service.git'
+  ]]
+)        script {
           sh '''
             sed -i "s|image:.*|image: raghuuppar/restaurant-listing-server:${VERSION}|" aws/restaurant-manifest.yml
           '''
