@@ -12,23 +12,30 @@ pipeline {
   stages {
 
     stage('Maven Build') {
-        steps {
-            dir('Restaurant-Listing') {  // Navigate into the correct directory
-                sh 'mvn clean package -DskipTests'
-            }
+      steps {
+        dir('Restaurant-Listing') {  // Navigate into the correct directory
+          sh 'mvn clean package -DskipTests'
         }
+      }
     }
-
 
     stage('Run Tests') {
       steps {
-        sh 'mvn test'
+        dir('Restaurant-Listing') {  // Run tests inside correct directory
+          sh 'mvn test'
+        }
       }
     }
 
     stage('SonarQube Analysis') {
       steps {
-        sh 'mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dsonar.host.url=http://15.237.253.27:9000/ -Dsonar.login=squ_39edca9a6f56db696affa006210a5f68a8f266d1'
+        dir('Restaurant-Listing') {
+          sh '''
+            mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar \
+            -Dsonar.host.url=http://15.237.253.27:9000/ \
+            -Dsonar.login=squ_39edca9a6f56db696affa006210a5f68a8f266d1
+          '''
+        }
       }
     }
 
@@ -63,8 +70,8 @@ pipeline {
       steps {
         withCredentials([usernamePassword(credentialsId: 'DOCKER_HUB_CREDENTIAL', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
           sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-          sh 'docker build -t raghuuppar/restaurantlistiong-server:${VERSION} .'
-          sh 'docker push raghuuppar/restaurantlistiong-server:${VERSION}'
+          sh 'docker build -t raghuuppar/restaurant-listing-server:${VERSION} .'
+          sh 'docker push raghuuppar/restaurant-listing-server:${VERSION}'
         }
       }
     }
@@ -80,9 +87,8 @@ pipeline {
         checkout scmGit(branches: [[name: 'main']], extensions: [], userRemoteConfigs: [[credentialsId: 'git-ssh', url: 'git@github.com:raghvendru/Restaurant-Service.git']])
         script {
           sh '''
-            sed -i "s|image:.*|image: raghuuppar/restaurantlistiong-server:${VERSION}|" aws/restaurant-manifest.yml
+            sed -i "s|image:.*|image: raghuuppar/restaurant-listing-server:${VERSION}|" aws/restaurant-manifest.yml
           '''
-          sh 'git checkout main'
           sh 'git add .'
           sh 'git commit -m "Update image tag to ${VERSION}"'
           sshagent(['git-ssh']) {
