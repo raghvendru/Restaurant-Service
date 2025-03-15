@@ -89,45 +89,29 @@ pipeline {
 
 
 
-  stage('Update Image Tag in GitOps') {
-      steps {
-          withCredentials([sshUserPrivateKey(credentialsId: 'git-ssh', keyFileVariable: 'SSH_KEY')]) {
-              sh '''
-                  # Create SSH directory and set permissions
-                  mkdir -p ~/.ssh
-                  chmod 700 ~/.ssh
+ stage('Update Image Tag in GitOps') {
+     steps {
+         withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+             sh '''
+                 # Configure Git
+                 git config --global user.email "raghavendruppar@gmail.com"
+                 git config --global user.name "raghavendru"
 
-                  # Copy SSH key to a temporary file with correct permissions
-                  cp "${SSH_KEY}" ~/.ssh/id_rsa
-                  chmod 600 ~/.ssh/id_rsa
+                 # Clone using HTTPS with token
+                 git clone https://${GITHUB_TOKEN}@github.com/raghavendruppar/Restaurant-Service.git
+                 cd Restaurant-Service
 
-                  # Add GitHub to known hosts
-                  ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
-                  chmod 644 ~/.ssh/known_hosts
+                 # Update the manifest file
+                 sed -i "s|image:.*|image: raghuuppar/restaurant-listing-server:${VERSION}|" deployment-folder/aws/restaurant-manifest.yml
 
-                  # Configure Git
-                  git config --global user.email "raghavendruppar@gmail.com"
-                  git config --global user.name "raghavendru"
-
-                  # Use GIT_SSH_COMMAND to specify the key
-                  export GIT_SSH_COMMAND="ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no"
-
-                  # Clone and update repository
-                  git clone git@github.com:raghavendruppar/Restaurant-Service.git
-                  cd Restaurant-Service
-
-                  sed -i "s|image:.*|image: raghuuppar/restaurant-listing-server:${VERSION}|" deployment-folder/aws/restaurant-manifest.yml
-
-                  git add deployment-folder/aws/restaurant-manifest.yml
-                  git commit -m "Update image tag for version ${VERSION}"
-                  git push origin main
-
-                  # Cleanup
-                  rm -f ~/.ssh/id_rsa
-              '''
-          }
-      }
-  }
+                 # Commit and push changes
+                 git add deployment-folder/aws/restaurant-manifest.yml
+                 git commit -m "Update image tag for version ${VERSION}"
+                 git push https://${GITHUB_TOKEN}@github.com/raghavendruppar/Restaurant-Service.git main
+             '''
+         }
+     }
+ }
   }
 
   }
