@@ -12,10 +12,13 @@ pipeline {
   stages {
 
     stage('Maven Build') {
-      steps {
-        sh 'mvn clean package -DskipTests'
-      }
+        steps {
+            dir('Restaurant-Listing') {  // Navigate into the correct directory
+                sh 'mvn clean package -DskipTests'
+            }
+        }
     }
+
 
     stage('Run Tests') {
       steps {
