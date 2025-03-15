@@ -68,7 +68,7 @@ pipeline {
 
     stage('Docker Build and Push') {
       steps {
-        withCredentials([usernamePassword(credentialsId: 'DOCKER_HUB_CREDENTIAL', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+        withCredentials([usernamePassword(credentialsId: 'DOCKER_HUB_CREDENTIALS', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
           sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
           sh 'docker build -t raghuuppar/restaurant-listing-server:${VERSION} .'
           sh 'docker push raghuuppar/restaurant-listing-server:${VERSION}'
