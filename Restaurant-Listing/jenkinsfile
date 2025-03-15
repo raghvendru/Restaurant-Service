@@ -89,29 +89,29 @@ pipeline {
 
 
 
- stage('Update Image Tag in GitOps') {
-     steps {
-         withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
-             sh '''
-                 # Configure Git
-                 git config --global user.email "raghavendruppar@gmail.com"
-                 git config --global user.name "raghavendru"
+stage('Update Image Tag in GitOps') {
+    steps {
+        withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+            sh '''
+                # Configure Git
+                git config --global user.email "raghavendruppar@gmail.com"
+                git config --global user.name "raghavendru"
 
-                 # Clone using HTTPS with token
-                 git clone https://${GITHUB_TOKEN}@github.com/raghavendruppar/Restaurant-Service.git
-                 cd Restaurant-Service
+                # Clone using HTTPS with token
+                git clone "https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/raghvendru/Restaurant-Service.git"
+                cd Restaurant-Service
 
-                 # Update the manifest file
-                 sed -i "s|image:.*|image: raghuuppar/restaurant-listing-server:${VERSION}|" deployment-folder/aws/restaurant-manifest.yml
+                # Update manifest
+                sed -i "s|image:.*|image: raghuuppar/restaurant-listing-server:${VERSION}|" deployment-folder/aws/restaurant-manifest.yml
 
-                 # Commit and push changes
-                 git add deployment-folder/aws/restaurant-manifest.yml
-                 git commit -m "Update image tag for version ${VERSION}"
-                 git push https://${GITHUB_TOKEN}@github.com/raghavendruppar/Restaurant-Service.git main
-             '''
-         }
-     }
- }
+                # Push changes
+                git add deployment-folder/aws/restaurant-manifest.yml
+                git commit -m "Update image tag for version ${VERSION}"
+                git push origin main
+            '''
+        }
+    }
+}
   }
 
   }
