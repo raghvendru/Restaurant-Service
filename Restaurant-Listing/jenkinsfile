@@ -1,111 +1,108 @@
 pipeline {
-  agent any
+    agent any
 
-  environment {
-    VERSION = "${env.BUILD_ID}"
-  }
-
-  tools {
-    maven "Maven"
-  }
-
-  stages {
-    stage('Maven Build') {
-      steps {
-        dir('Restaurant-Listing') {
-          sh 'mvn clean package -DskipTests'
-        }
-      }
+    environment {
+        VERSION = "${env.BUILD_ID}"
     }
 
-    stage('Run Tests') {
-      steps {
-        dir('Restaurant-Listing') {
-          sh 'mvn test'
-        }
-      }
+    tools {
+        maven "Maven"
     }
 
-    stage('SonarQube Analysis') {
-      steps {
-        dir('Restaurant-Listing') {
-          sh '''
-            mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar \
-            -Dsonar.host.url=http://15.237.253.27:9000/ \
-            -Dsonar.login=squ_cb46075e6c73822a511d21817fbcc767ca47bf5b
-          '''
-        }
-      }
-    }
+    stages {
 
-    stage('Check code coverage') {
-      steps {
-        script {
-          def token = "squ_cb46075e6c73822a511d21817fbcc767ca47bf5b"
-          def sonarQubeUrl = "http://15.237.253.27:9000/api"
-          def componentKey = "com.jagcoder:Restaurant-Listing"
-          def coverageThreshold = 55.0
-
-          def response = sh(
-            script: "curl -s -H 'Authorization: Bearer ${token}' '${sonarQubeUrl}/measures/component?component=${componentKey}&metricKeys=coverage'",
-            returnStdout: true
-          ).trim()
-
-          def coverageValue = sh(
-            script: "echo '${response}' | jq -r '.component.measures[0].value // "0"'",
-            returnStdout: true
-          ).trim()
-
-          if (!coverageValue.isNumber()) {
-            echo "Warning: Coverage value is missing or invalid. Defaulting to 0%"
-            coverageValue = "0"
-          }
-
-          def coverage = coverageValue.toDouble()
-          echo "Coverage: ${coverage}%"
-
-          if (coverage < coverageThreshold) {
-            error "Coverage is below the threshold of ${coverageThreshold}%. Aborting the pipeline."
-          }
-        }
-      }
-    }
-
-    stage('Docker Build and Push') {
-      steps {
-        withCredentials([usernamePassword(credentialsId: 'DOCKER_HUB_CREDENTIALS', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-          sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-
-          dir('Restaurant-Listing') {
-            sh 'docker build -t raghuuppar/restaurant-listing-server:${VERSION} .'
-            sh 'docker push raghuuppar/restaurant-listing-server:${VERSION}'
-          }
-        }
-      }
-    }
-
-    stage('Cleanup Workspace') {
-      steps {
-        cleanWs()
-      }
-    }
-
-    stage('Update Image Tag in GitOps') {
-      steps {
-        checkout([$class: 'GitSCM', branches: [[name: 'refs/heads/main']], extensions: [], userRemoteConfigs: [[url: 'git@github.com:raghvendru/Restaurant-Service.git', credentialsId: 'git-ssh']]])
-        script {
-          dir('Restaurant-Listing') {
-            sh '''
-              sed -i "s|image:.*|image: raghuuppar/restaurant-listing-server:${VERSION}|" aws/restaurant-manifest.yml
-            '''
-            sh 'git add .'
-            sh 'git commit -m "Update image tag to ${VERSION}"'
-            sshagent(['git-ssh']) {
-              sh 'git push origin main'
+        stage('Maven Build') {
+            steps {
+                dir('Restaurant-Listing') {
+                    sh 'mvn clean package -DskipTests'
+                }
             }
-          }
         }
-      }
+
+        stage('Run Tests') {
+            steps {
+                dir('Restaurant-Listing') {
+                    sh 'mvn test'
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                dir('Restaurant-Listing') {
+                    sh '''
+                        mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar \
+                        -Dsonar.host.url=http://15.237.253.27:9000/ \
+                        -Dsonar.login=squ_cb46075e6c73822a511d21817fbcc767ca47bf5b
+                    '''
+                }
+            }
+        }
+
+        stage('Check code coverage') {
+            steps {
+                script {
+                    def token = "squ_cb46075e6c73822a511d21817fbcc767ca47bf5b"
+                    def sonarQubeUrl = "http://15.237.253.27:9000/api"
+                    def componentKey = "com.jagcoder:Restaurant-Listing"
+                    def coverageThreshold = 55.0
+
+                    def response = sh(
+                        script: "curl -s -H 'Authorization: Bearer ${token}' '${sonarQubeUrl}/measures/component?component=${componentKey}&metricKeys=coverage'",
+                        returnStdout: true
+                    ).trim()
+
+                    def coverageValue = sh(
+                        script: "echo '${response}' | jq -r '.component.measures[0].value // \"0\"'",
+                        returnStdout: true
+                    ).trim()
+
+                    def coverage = coverageValue.isNumber() ? coverageValue.toDouble() : 0.0
+
+                    echo "Coverage: ${coverage}%"
+
+                    if (coverage < coverageThreshold) {
+                        error "Coverage is below the threshold of ${coverageThreshold}%. Aborting the pipeline."
+                    }
+                }
+            }
+        }
+
+        stage('Docker Build and Push') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'DOCKER_HUB_CREDENTIALS', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+
+                    dir('Restaurant-Listing') {
+                        sh 'docker build -t raghuuppar/restaurant-listing-server:${VERSION} .'
+                        sh 'docker push raghuuppar/restaurant-listing-server:${VERSION}'
+                    }
+                }
+            }
+        }
+
+        stage('Cleanup Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+
+        stage('Update Image Tag in GitOps') {
+            steps {
+                checkout([$class: 'GitSCM', branches: [[name: 'refs/heads/main']], extensions: [], userRemoteConfigs: [[url: 'git@github.com:raghvendru/Restaurant-Service.git', credentialsId: 'git-ssh']]])
+                script {
+                    dir('Restaurant-Listing') {
+                        sh '''
+                            sed -i "s|image:.*|image: raghuuppar/restaurant-listing-server:${VERSION}|" aws/restaurant-manifest.yml
+                        '''
+                        sh 'git add .'
+                        sh 'git commit -m "Update image tag to ${VERSION}"'
+                        sshagent(['git-ssh']) {
+                            sh 'git push origin main'
+                        }
+                    }
+                }
+            }
+        }
     }
-  }
 }
