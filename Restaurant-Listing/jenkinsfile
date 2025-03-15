@@ -89,7 +89,12 @@ pipeline {
 
         stage('Update Image Tag in GitOps') {
             steps {
-                checkout([$class: 'GitSCM', branches: [[name: 'refs/heads/main']], extensions: [], userRemoteConfigs: [[url: 'git@github.com:raghvendru/Restaurant-Service.git', credentialsId: 'git-ssh']]]])
+                checkout([$class: 'GitSCM',
+                    branches: [[name: 'refs/heads/main']],
+                    extensions: [],
+                    userRemoteConfigs: [[url: 'git@github.com:raghvendru/Restaurant-Service.git', credentialsId: 'git-ssh']]]
+                ])
+
                 script {
                     sh '''
                         sed -i "s|image:.*|image: raghuuppar/restaurant-listing-server:${VERSION}|" deployment-folder/aws/restaurant-manifest.yml
