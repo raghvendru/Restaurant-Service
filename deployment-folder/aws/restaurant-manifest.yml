@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: restaurantapp
-          image: raghuuppar/restaurant-listing-server:115
+          image: raghuuppar/restaurant-listing-server:116
           imagePullPolicy: Always
           ports:
             - containerPort: 9091
